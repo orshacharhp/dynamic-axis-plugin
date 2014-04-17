@@ -11,6 +11,7 @@ import hudson.matrix.MatrixBuild;
 import hudson.model.TaskListener;
 import hudson.util.FormValidation;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.logging.Logger;
 import java.util.regex.Pattern;
@@ -49,9 +50,9 @@ public class DynamicAxis extends Axis
 
 	/**
 	 * An accessor is required if referenced in the Jelly file.
-	 * @return
+	 * @return the name of the variable
 	 */
-	public String getVarName()
+	public synchronized String getVarName()
 	{
 		return varName == null ? "" : varName;
 	}
@@ -74,7 +75,7 @@ public class DynamicAxis extends Axis
 	 * @see hudson.matrix.Axis#getValues()
 	 */
 	@Override
-	public List<String> getValues()
+	public synchronized List<String> getValues()
 	{
 		checkForDefaultValues();
 		return axisValues;
@@ -85,7 +86,7 @@ public class DynamicAxis extends Axis
 	 * @see hudson.matrix.Axis#getValueString()
 	 */
 	@Override
-	public String getValueString()
+	public synchronized String getValueString()
 	{
 		return getVarName();
 	}
@@ -97,7 +98,7 @@ public class DynamicAxis extends Axis
 	 * @see hudson.matrix.Axis#rebuild(hudson.matrix.MatrixBuild.MatrixBuildExecution)
 	 */
 	@Override
-	public List<String> rebuild( MatrixBuild.MatrixBuildExecution context )
+	public synchronized List<String> rebuild( MatrixBuild.MatrixBuildExecution context )
 	{
 		// clear any existing values to ensure we do not return old ones
 		LOGGER.fine( "Rebuilding axis names from variable '" + varName + "'" );
@@ -131,7 +132,8 @@ public class DynamicAxis extends Axis
 		// validate result list before returning it
 		checkForDefaultValues();
 		LOGGER.fine( "Returning axis list " + axisValues );
-		return axisValues;
+        // must return a new object because axisValues might change
+		return new ArrayList<String>(axisValues);
 	}
 
 	/**
